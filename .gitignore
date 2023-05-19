@@ -163,8 +163,8 @@ cython_debug/
 #Agregados Eitu
 __pycache__/
 Seguimiento/
-"Stocks Data/"
-"Stocks Grafs/"
+Stocks Data/
+Stocks Grafs/
 stck_dwnld.txt
 Resumen_Acciones.csv
 Stocks*/
