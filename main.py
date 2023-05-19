@@ -1,16 +1,6 @@
 __author__ = 'Eitan Melnitzky'
 # EL COMANDO EN TERMINAL PARA EXPORTAR ESTO EN UN SOLO ARCHIVO .EXE ES: pyinstaller main.py --onefile
-# COMANDOS DE GIT PARA ACTUALIZAR EL REPOSITORIO ONLINE:
-# git init
-# git add .
-# git commit -m "MENSAJE DE LOS CAMBIOS"
-# git push origin main
-# SI SE QUIERE RETROTRAER UN ADD
-# git reset
-# SI SE QUIERE CHEQUEAR UN COMMIT
-# git log
-# SI SE QUIERE CANCELAR UN COMMIT
-# git reset HEAD~
+
 import stock_download as sd
 import acciones as acc
 import graficos as gr
