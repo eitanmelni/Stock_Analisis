@@ -14,7 +14,7 @@ def limpiar_carpeta(path):
         os.remove(f'{path}/{item}')
 
 
-print('---------- Bienvenido ----------')
+print('\n---------- Bienvenido ----------')
 
 # Busco el portfolio actualizado por ultima vez. Este solo tiene las posiciones abiertas.
 port_actual = pf.levantar_portfolio('Seguimiento/ultimo_portfolio.csv')
@@ -63,5 +63,5 @@ gr.graficos_velas(dias=180, definicion=800)
 # Linea final del script borrando el token chequear cuand necesaria pueda ser...
 os.remove('token.txt')
 
-print('-------- Muchas Gracias --------')
+print('\n-------- Muchas Gracias --------')
 tm.sleep(3)

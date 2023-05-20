@@ -8,7 +8,6 @@ import os
 import matplotlib.pyplot as plt
 
 
-
 '''token = iol.gestor_token()
 print(token)
 cuenta = iol.estado_cuenta(token)

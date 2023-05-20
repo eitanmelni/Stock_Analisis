@@ -125,7 +125,7 @@ def estado_cuenta(token):
     cuenta = requests.get(url=url, headers=headers)
     respuesta = json.loads(cuenta.text)
     invertido = respuesta['cuentas'][0]['titulosValorizados']
-    disponible = respuesta['cuentas'][0]['disponible'] + respuesta['cuentas'][0]['comprometido']
+    disponible = respuesta['cuentas'][0]['disponible']  # + respuesta['cuentas'][0]['comprometido']
     total = respuesta['cuentas'][0]['total']
     # reservado_imp = invertido * 0.006
     # disponible = disponible - reservado_imp

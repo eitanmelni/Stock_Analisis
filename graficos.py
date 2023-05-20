@@ -283,7 +283,7 @@ def grafico_portfolio(portfolio, archivo, definicion=800):
 
     ax.pie(valores, labels=etiquetas_completas, colors=colores_adapt, autopct='%1.1f%%', startangle=90,
            counterclock=False, textprops={'fontsize': 9, 'color': '#E6E6E6'})
-    ax.set_title(f'Tenencias\n${sum(valores)}', fontsize=13, loc='left', color='#E6E6E6')
+    ax.set_title(f'Tenencias\n${sum(valores):.0f}', fontsize=13, loc='left', color='#E6E6E6')
 
     ax.axis('equal')
 

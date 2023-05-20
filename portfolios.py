@@ -40,8 +40,9 @@ class Portfolio:
 
     # Genera el registro del portfolio en forma de un dataframe
     def registro_port(self):
-        cols = ['Ticker', 'Fecha Compra', 'Precio Compra', 'Cantidad', 'Estado', 'Fecha Venta', 'Precio Venta', 'Valor']
-        data = [['CASH', '', '', '', '', '', '', self._cash_disp]]
+        cols = ['Ticker', 'Fecha Compra', 'Precio Compra', 'Cantidad', 'Estado', 'Fecha Venta', 'Precio Venta',
+                'Valor', 'Rendimiento', 'Renidmiento Mensualizado']
+        data = [['CASH', '', '', '', '', '', '', self._cash_disp, '', '']]
         for posicion in self._posiciones:
             data.append(posicion.registro())
         return pd.DataFrame(data=data, columns=cols)
@@ -160,11 +161,11 @@ def levantar_portfolio(path):
         df = df.drop(0).reset_index(drop=True)
         for fila in df.index:
             port.agregar_pos([p.Posicion(df.loc[fila]['Ticker'],
-                                         dt.datetime.strptime(df.loc[0]['Fecha Compra'], '%Y-%m-%d').date(),
+                                         dt.datetime.strptime(df.loc[fila]['Fecha Compra'], '%Y-%m-%d').date(),
                                          df.loc[fila]['Precio Compra'],
                                          df.loc[fila]['Cantidad'],
                                          df.loc[fila]['Estado'],
-                                         dt.datetime.strptime(df.loc[0]['Fecha Venta'], '%Y-%m-%d').date(),
+                                         dt.datetime.strptime(df.loc[fila]['Fecha Venta'], '%Y-%m-%d').date(),
                                          df.loc[fila]['Precio Venta'])])
     else:
         port = Portfolio()

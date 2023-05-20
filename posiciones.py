@@ -60,19 +60,8 @@ class Posicion:
     def rendimiento(self):
         return self._rendimiento
 
-    def registro(self):
-        data = [self.ticker(),
-                self.fecha_compra(),
-                self.precio_compra(),
-                self.cantidad(),
-                self.estado(),
-                self.fecha_venta(),
-                self.precio_venta(),
-                0]
-        return data
-
     def __str__(self):
-        return f'{self._nombre} ({self._ticker}):    ${self._cantidad_titulos * self._precio_v} ({round(self._cantidad_titulos)} papeles por ${self._precio_v}) || Rendimiento {round(self._rendimiento*100,1)}% ({self._estado})'
+        return f'{self._nombre} ({self._ticker}):    ${self._cantidad_titulos * self._precio_v} ({round(self._cantidad_titulos)} papeles por ${self._precio_v}) || Rendimiento {round(self._rendimiento * 100, 1)}% ({self._estado})'
 
     def __repr__(self):
         return f'{self._ticker}: {self._cantidad_titulos} papeles por ${self._precio_v} en {self._fecha_v}, comprados a ${self._precio_v} en {self._fecha_v.date()}. La posicion esta {self._estado}'
@@ -107,7 +96,11 @@ class Posicion:
         return self._valor_actual - other.valor()'''
 
     def __len__(self):
-        return round((self._fecha_v - self._fecha_c)/dt.timedelta(days=1))
+        res = round((self._fecha_v - self._fecha_c) / dt.timedelta(days=1))
+        if res > 0:
+            return res
+        else:
+            return 1
 
     def __recalcular(self):
         self._inversion = self._precio_c * self._cantidad_titulos
@@ -128,6 +121,18 @@ class Posicion:
 
     def modif_fecha(self, nueva_fecha):
         self._fecha_v = nueva_fecha.date()
+
+    def registro(self):
+        return [self.ticker(),
+                self.fecha_compra(),
+                self.precio_compra(),
+                self.cantidad(),
+                self.estado(),
+                self.fecha_venta(),
+                self.precio_venta(),
+                self.valor(),
+                round(self.rendimiento(), 4),
+                round((self.rendimiento() + 1) ** (30 / len(self)) - 1, 4)]
 
     def actualizar(self):
         df = pd.read_csv(f'Stocks Data/{self._nombre}.csv', index_col='Fecha', parse_dates=True)
