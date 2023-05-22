@@ -6,6 +6,8 @@ import pytz
 from dateutil import tz
 import posiciones as p
 import pwinput as pw
+import time as tm
+import sys
 
 
 # https://www.youtube.com/watch?v=hNbv1EIUW6g&list=PLpOqH6AE0tNguX5SG8HpcD3lfmzWrIn9n&index=5
@@ -24,7 +26,12 @@ def token():
             'Content-Type': 'application/x-www-form-urlencoded'
             }
     # Se devuelve el resultado de la funcion que procesa los json de los tokens
-    return process_token_json(requests.post(url, args))
+    try:
+        return process_token_json(requests.post(url, args))
+    except:
+        print('Usuario y/o Contraseña incorrecto(s)')
+        tm.sleep(5)
+        sys.exit()
 
 
 # Funcion que pide user y pass y genera un token nuevo y devuelve la respuesta

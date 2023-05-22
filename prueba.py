@@ -6,6 +6,8 @@ import iol
 import logs
 import os
 import matplotlib.pyplot as plt
+import requests
+import json
 
 
 '''token = iol.gestor_token()
