@@ -61,7 +61,8 @@ sd.stck_dwnld_iol(acc.stocks)
 gr.graficos_velas(dias=180, definicion=800)
 
 # Linea final del script borrando el token chequear cuand necesaria pueda ser...
-os.remove('token.txt')
+if os.path.exists('token.txt'):
+    os.remove('token.txt')
 
 print('\n-------- Muchas Gracias --------')
 tm.sleep(3)

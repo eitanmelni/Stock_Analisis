@@ -266,12 +266,14 @@ def grafico_portfolio(portfolio, archivo, definicion=800):
                '#8AB547']
     valores = [portfolio.cash()]
     etiquetas = ['Disponible']
+    rendimientos = ['']
 
     for pos in portfolio.posiciones():
         valores.append(pos.valor())
         etiquetas.append(pos.nombre())
+        rendimientos.append(pos.rendimiento())
 
-    etiquetas_completas = [f'{etiqueta}\n${valor:.0f}' for etiqueta, valor in zip(etiquetas, valores)]
+    etiquetas_completas = [f'{etiqueta}\n${valor:.0f}\n{f"{rendimiento:.1%}" if rendimiento != str() else str()}'.strip() for etiqueta, valor, rendimiento in zip(etiquetas, valores, rendimientos)]
 
     colores_adapt = colores[:len(valores)]
 
@@ -282,7 +284,7 @@ def grafico_portfolio(portfolio, archivo, definicion=800):
     fig.patch.set_facecolor('#1E1F22')
 
     ax.pie(valores, labels=etiquetas_completas, colors=colores_adapt, autopct='%1.1f%%', startangle=90,
-           counterclock=False, textprops={'fontsize': 9, 'color': '#E6E6E6'})
+           counterclock=False, textprops={'fontsize': 7, 'color': '#E6E6E6'})
     ax.set_title(f'Tenencias\n${sum(valores):.0f}', fontsize=13, loc='left', color='#E6E6E6')
 
     ax.axis('equal')
