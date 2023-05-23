@@ -17,7 +17,7 @@ import sys
 
 def token():
     usr = input("Usuario IOL: ").strip()
-    psw = pw.pwinput('Contraseña IOL: ', '*').strip()
+    psw = 'Yohimbina.15'  # pw.pwinput('Contraseña IOL: ', '*').strip()
 
     url = 'https://api.invertironline.com/token'
     args = {'username': usr,

@@ -8,6 +8,7 @@ import os
 import matplotlib.pyplot as plt
 import requests
 import json
+import graficos as gr
 
 
 '''token = iol.gestor_token()
@@ -45,24 +46,71 @@ while i in range(n) and rem[1] > 0:
 print(acc)'''
 
 
-'''
+
 pos1 = p.Posicion('ALUA', dt.datetime(2023, 1, 1), 100, 3, 'Cerrada', dt.datetime(2023, 1, 4), 117)
+pos3 = p.Posicion('MELI', dt.datetime(2023, 1, 1), 130, 4)
 pos2 = p.Posicion('BABA', dt.datetime(2023, 1, 1), 1000, 30, 'Abierta', dt.datetime(2023, 2, 4), 1231.7)
-pos3 = p.Posicion('ALUA', dt.datetime(2023, 1, 1), 130, 4)
 pos4 = p.Posicion('GGAL', dt.datetime(2023, 1, 1), 3000, 13)
 pos5 = p.Posicion('YPFD', dt.datetime(2023, 1, 1), 2340, 5)
-pos6 = p.Posicion('ALUA', dt.datetime(2023, 1, 1), 250, 6)
+pos6 = p.Posicion('C', dt.datetime(2023, 1, 1), 2340, 5)
+pos7 = p.Posicion('BMA', dt.datetime(2023, 1, 1), 2340, 5)
+pos8 = p.Posicion('COME', dt.datetime(2023, 1, 1), 2340, 5)
 
-pos = [pos1, pos2, pos3, pos4, pos5, pos6]
+pos = [pos1, pos2, pos3, pos4, pos5, pos6, pos7, pos8]
 
-port1 = pf.Portfolio(60000)
+port1 = pf.Portfolio(600)
 
 port1.agregar_pos(pos)
 
 print(port1)
-'''
 
+valores = [port1.cash()]
+etiquetas = ['Disponible']
+rendimientos = [0]
 
+for pos in port1.posiciones():
+    valores.append(pos.valor())
+    etiquetas.append(pos.nombre())
+    rendimientos.append(pos.rendimiento())
+
+# Calculo el total de la cartera y creo una lista con los porcentajes
+total = sum(valores)
+porcentajes = [valor / total for valor in valores]
+
+# Armo un Dataframe temporal para ordenar las acciones como mejor se pueda de forma de no superponer etiquetas
+cols = ['Acc', 'Valor', 'Rend', 'Share']
+info_graf = pd.DataFrame(data=[etiquetas, valores, rendimientos, porcentajes], index=cols)
+info_graf = info_graf.transpose().sort_values(by='Share', ignore_index=True)
+info_graf['Bool'] = info_graf['Share'].apply(lambda x: x < 0.05)
+
+# Cuento cantidad de acciones de mas y menos de 5% de share
+chicas = sum(info_graf['Bool'])
+todas = len(info_graf)
+# Defino cuales de las acciones chicas se deben intercambiar para no solapar etiquetas (tengo sus filas en el DF)
+chicas_inter = [elem for elem in range(chicas) if elem % 2 == 1]
+# Defino cuales de las acciones grandes se pueden intercambiar (tengo sus filas en el DF)
+grandes_inter = [elem for elem in range(chicas, todas) if elem % 2 == todas % 2 and elem != chicas]
+
+# Se toma el minimo entre las dos cantidades a intercambiar y se corta la lista mas grande
+if len(chicas_inter) > len(grandes_inter):
+    chicas_inter = list(chicas_inter[:len(grandes_inter)])
+else:
+    grandes_inter = list(grandes_inter[:len(chicas_inter)])
+
+# Se hacen los intercambios de filas que se pueden hacer
+for i in range(len(chicas_inter)):
+    info_graf.loc[[chicas_inter[i], grandes_inter[i]]] = info_graf.loc[[grandes_inter[i], chicas_inter[i]]].values
+
+# Hay que separar de nuevo el DF en las listas originales, ahora ordenadas convenientemente
+etiquetas = list(info_graf['Acc'])
+valores = list(info_graf['Valor'])
+rendimientos = list(info_graf['Rend'])
+
+print(info_graf)
+print()
+print(etiquetas)
+print(valores)
+print(rendimientos)
 
 '''log_info = dict()
 log_info['ultima_actu_portfolio'] = '2023-04-15 18:03:45'

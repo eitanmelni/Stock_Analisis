@@ -29,7 +29,7 @@ def stck_dwnld_iol(stock_list=acc.stocks):
     for stock in stock_list:
         token = iol.gestor_token()
         # Usando la funcion serie_hist generamos guardo la respuesta de la API para la accion
-        historico = iol.serie_hist(stock.split(".")[0], token, start, end, mercado)
+        historico = iol.serie_hist(stock, token, start, end, mercado)
         # Inicializo los index de lo que será el dataframe (que contendra las fechas) y la data (que guardará las lineas
         # de la serie historica con los valores con los que previamente se creo la lista de columns)
         index = []
@@ -37,7 +37,7 @@ def stck_dwnld_iol(stock_list=acc.stocks):
         # En caso que la bajada sea exitosa
         if historico.status_code in [200, 201] and len(json.loads(historico.text)) > 0:
             # Updateo el status para que el usuario siga el progreso
-            print(f'- {stock.split(".")[0]}: exitosa')
+            print(f'- {stock}: exitosa')
             # Guardo el papel en la lista "existosas"
             exitosas.append(stock)
             # Proceso el json con la serie historica de la accion
@@ -61,7 +61,7 @@ def stck_dwnld_iol(stock_list=acc.stocks):
             df = fs.extremos_hist(df)
             df = fs.velas_categ(df)
             # Sumo la info de la accion actual del loop a las listas del resumen
-            tickers.append(stock.split(".")[0])
+            tickers.append(stock)
             resumen.append(df.iloc[-1])
             if 'Stocks Data' not in os.listdir('.'):
                 os.mkdir('Stocks Data')
@@ -69,7 +69,7 @@ def stck_dwnld_iol(stock_list=acc.stocks):
         # En caso que la bajada devuelva un error, solamente se guarda la accion y el error en la lista "fail_download"
         else:
             # Updateo el status para que el usuario siga el progreso
-            print(f'- {stock.split(".")[0]}: fallida')
+            print(f'- {stock}: fallida')
             fail_download.append([stock, historico.status_code])
     # Creo el dframe de resumen con una linea por accion donde el index es el ticker y la data es la info del ultimo dia
     resumen_acciones = pd.DataFrame(resumen, index=tickers, columns=columns_resumen)
@@ -87,15 +87,16 @@ def stck_dwnld_iol(stock_list=acc.stocks):
 
 
 '''
-def stck_dwnld():
-    start = dt.datetime(2019, 1, 1)
-    intermedio = dt.datetime(2020, 6, 1)
-    end = dt.date.today()
-
-    for stock in acc.stocks:
-        data = web.DataReader(stock, 'yahoo', start, end, pause=2)
-        data = fs.macd(data)
-        data = fs.rsi(data)
-        data.to_csv(acc.tickers[stock] + '.csv', index=True)
-        # INCOMPLETO
+LA IDEA ES HACER UN PLAN B PARA LAS ACCIONES QUE DEVUELVEN CODIGOS DE ERROR O RESPUESTAS VACIAS EN LA FUNCION ANTERIOR
+    - BUSCAR CUALES SON LAS ACCIONES EN CUESTION
+    - BUSCAR CUAL ES LA ULTIMA FECHA DE LA QUE SE TIENE INFORMACION HISTORICA DE CADA PAPEL (DEBEN ESTAR GUARDADOS COMO 
+    INFO PERMANENTE QUE NO SE RENUEVA A CADA CORRIDA DEL SCRIPT)
+    - CONSULTAR LA COTIZACION DIA POR DIA DESDE LA ULTIMA INFO HASTA EL DIA ACTUAL/ANTERIOR Y ALMACENARLA PARA QUE LUEGO
+    PUEDA SER GRAFICADA
 '''
+
+
+# Funcion de descarga dia por dia de la cotizacion de acciones
+def step_by_step_dwnld_iol(tickers):
+
+    pass

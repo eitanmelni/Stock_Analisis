@@ -14,7 +14,7 @@ def limpiar_carpeta(path):
         os.remove(f'{path}/{item}')
 
 
-print('\n---------- Bienvenido ----------')
+print('\n---------- Bienvenido ----------\n')
 
 # Busco el portfolio actualizado por ultima vez. Este solo tiene las posiciones abiertas.
 port_actual = pf.levantar_portfolio('Seguimiento/ultimo_portfolio.csv')
@@ -55,12 +55,13 @@ if 'Stocks Grafs' in os.listdir('.'):
 #   - guardado de los archivos de series historicas
 #   - guardado del archivo de resumen con una linea por papel
 #   - guardado de reporte de descargas exitosas y fallidas
-sd.stck_dwnld_iol(acc.stocks)
-
+estado_descarga = sd.stck_dwnld_iol(acc.stocks)
+fallidas = [elemento[0] for elemento in estado_descarga[1]]
+print(fallidas)
 # Grafico los ultimos 180 dias de todas las acciones que han tenido descargas de su serie historica con 800dpi
 gr.graficos_velas(dias=180, definicion=800)
 
-# Linea final del script borrando el token chequear cuand necesaria pueda ser...
+# Linea final del script borrando el token (chequear cuan necesaria pueda ser...)
 if os.path.exists('token.txt'):
     os.remove('token.txt')
 

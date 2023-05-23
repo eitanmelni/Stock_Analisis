@@ -18,7 +18,7 @@ class Posicion:
             self._precio_v = precio_c
         else:
             self._precio_v = precio_v
-        self._nombre = acc.tickers[f'{ticker}.BA']
+        self._nombre = acc.tickers[f'{ticker}']
         self._inversion = self._precio_c * self._cantidad_titulos
         self._valor_actual = self._precio_v * self._cantidad_titulos
         self._resultado = self._valor_actual - self._inversion

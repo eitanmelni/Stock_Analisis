@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 import acciones as acc
 
 
+def invertir_posicion(lista, indice_1, indice_2):
+    lista[indice_1], lista[indice_2] = lista[indice_2], lista[indice_1]
+
+
 # Funcion que se encarga de explorar que csv hay, los importa, los grafica y guarda todos los graficos
 def graficos_velas(dias=180, definicion=600):
     matplotlib.interactive(False)
@@ -266,15 +270,50 @@ def grafico_portfolio(portfolio, archivo, definicion=800):
                '#8AB547']
     valores = [portfolio.cash()]
     etiquetas = ['Disponible']
-    rendimientos = ['']
+    rendimientos = [0]
 
     for pos in portfolio.posiciones():
         valores.append(pos.valor())
         etiquetas.append(pos.nombre())
         rendimientos.append(pos.rendimiento())
 
-    etiquetas_completas = [f'{etiqueta}\n${valor:.0f}\n{f"{rendimiento:.1%}" if rendimiento != str() else str()}'.strip() for etiqueta, valor, rendimiento in zip(etiquetas, valores, rendimientos)]
+    # Calculo el total de la cartera y creo una lista con los porcentajes
+    total = sum(valores)
+    porcentajes = [valor / total for valor in valores]
 
+    # Armo un Dataframe temporal para ordenar las acciones como mejor se pueda de forma de no superponer etiquetas
+    cols = ['Acc', 'Valor', 'Rend', 'Share']
+    info_graf = pd.DataFrame(data=[etiquetas, valores, rendimientos, porcentajes], index=cols)
+    info_graf = info_graf.transpose().sort_values(by='Share', ignore_index=True)
+    info_graf['Bool'] = info_graf['Share'].apply(lambda x: x < 0.05)
+
+    # Cuento cantidad de acciones de mas y menos de 5% de share
+    chicas = sum(info_graf['Bool'])
+    todas = len(info_graf)
+    # Defino cuales de las acciones chicas se deben intercambiar para no solapar etiquetas (tengo sus filas en el DF)
+    chicas_inter = [elem for elem in range(chicas) if elem % 2 == 1]
+    # Defino cuales de las acciones grandes se pueden intercambiar (tengo sus filas en el DF)
+    grandes_inter = [elem for elem in range(chicas, todas) if elem % 2 == todas % 2 and elem != chicas]
+
+    # Se toma el minimo entre las dos cantidades a intercambiar y se corta la lista mas grande
+    if len(chicas_inter) > len(grandes_inter):
+        chicas_inter = list(chicas_inter[:len(grandes_inter)])
+    else:
+        grandes_inter = list(grandes_inter[:len(chicas_inter)])
+
+    # Se hacen los intercambios de filas que se pueden hacer
+    for i in range(len(chicas_inter)):
+        info_graf.loc[[chicas_inter[i], grandes_inter[i]]] = info_graf.loc[[grandes_inter[i], chicas_inter[i]]].values
+
+    # Hay que separar de nuevo el DF en las listas originales, ahora ordenadas convenientemente
+    etiquetas = list(info_graf['Acc'])
+    valores = list(info_graf['Valor'])
+    rendimientos = list(info_graf['Rend'])
+
+    # Creo los textos completos de las etiquetas con la informacion que quiero que aparezca
+    etiquetas_completas = [f'{etiqueta}\n${valor:.0f}\n{f"{rendimiento:.1%}" if rendimiento != 0 else str()}'.strip() for etiqueta, valor, rendimiento in zip(etiquetas, valores, rendimientos)]
+
+    # Dejo la lista de colores de la cantidad de cosas a graficar
     colores_adapt = colores[:len(valores)]
 
     # Creo el objeto tipo Figure que contendrá al gráfico con 4 subplots y con una proporción de tamaño definida
@@ -284,12 +323,10 @@ def grafico_portfolio(portfolio, archivo, definicion=800):
     fig.patch.set_facecolor('#1E1F22')
 
     ax.pie(valores, labels=etiquetas_completas, colors=colores_adapt, autopct='%1.1f%%', startangle=90,
-           counterclock=False, textprops={'fontsize': 7, 'color': '#E6E6E6'})
-    ax.set_title(f'Tenencias\n${sum(valores):.0f}', fontsize=13, loc='left', color='#E6E6E6')
+           counterclock=False, textprops={'fontsize': 7, 'color': '#E6E6E6'}, labeldistance=1.5)
+    ax.set_title(f'Tenencias\n${total:.0f}', fontsize=13, loc='left', color='#E6E6E6')
 
     ax.axis('equal')
-
-    fig.show()
 
     if 'Seguimiento' not in os.listdir('.'):
         os.mkdir('Seguimiento')
