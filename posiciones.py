@@ -131,6 +131,7 @@ class Posicion:
                 self.fecha_venta(),
                 self.precio_venta(),
                 self.valor(),
+                self.cantidad() * (self.precio_venta() - self.precio_compra()),
                 round(self.rendimiento(), 4),
                 round((self.rendimiento() + 1) ** (30 / len(self)) - 1, 4)]
 

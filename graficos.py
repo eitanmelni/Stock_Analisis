@@ -272,6 +272,8 @@ def grafico_portfolio(portfolio, archivo, definicion=800):
     etiquetas = ['Disponible']
     rendimientos = [0]
 
+    # PREPARACION DE LA INFO PARA GRAFICAR
+    # Armo las listas con la info relevante del portfolio
     for pos in portfolio.posiciones():
         valores.append(pos.valor())
         etiquetas.append(pos.nombre())
@@ -316,6 +318,7 @@ def grafico_portfolio(portfolio, archivo, definicion=800):
     # Dejo la lista de colores de la cantidad de cosas a graficar
     colores_adapt = colores[:len(valores)]
 
+    # CREACION DEL GRAFICO
     # Creo el objeto tipo Figure que contendrá al gráfico con 4 subplots y con una proporción de tamaño definida
     fig, ax = plt.subplots(nrows=1, ncols=1)
 
@@ -323,7 +326,7 @@ def grafico_portfolio(portfolio, archivo, definicion=800):
     fig.patch.set_facecolor('#1E1F22')
 
     ax.pie(valores, labels=etiquetas_completas, colors=colores_adapt, autopct='%1.1f%%', startangle=90,
-           counterclock=False, textprops={'fontsize': 7, 'color': '#E6E6E6'}, labeldistance=1.5)
+           counterclock=False, textprops={'fontsize': 7, 'color': '#E6E6E6'})
     ax.set_title(f'Tenencias\n${total:.0f}', fontsize=13, loc='left', color='#E6E6E6')
 
     ax.axis('equal')

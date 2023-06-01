@@ -168,3 +168,10 @@ Stocks Grafs/
 stck_dwnld.txt
 Resumen_Acciones.csv
 Stocks*/
+token_staging.py
+main_staging.py
+pruebas_triviales.py
+token.txt
+SensInfo/
+Temporales/
+*.ipynb

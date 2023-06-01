@@ -41,8 +41,8 @@ class Portfolio:
     # Genera el registro del portfolio en forma de un dataframe
     def registro_port(self):
         cols = ['Ticker', 'Fecha Compra', 'Precio Compra', 'Cantidad', 'Estado', 'Fecha Venta', 'Precio Venta',
-                'Valor', 'Rendimiento', 'Renidmiento Mensualizado']
-        data = [['CASH', '', '', '', '', '', '', self._cash_disp, '', '']]
+                'Valor', 'Resultado Nominal', 'Rendimiento', 'Renidmiento Mensualizado']
+        data = [['CASH', '', '', '', '', '', '', self._cash_disp, '', '', '']]
         for posicion in self._posiciones:
             data.append(posicion.registro())
         return pd.DataFrame(data=data, columns=cols)
