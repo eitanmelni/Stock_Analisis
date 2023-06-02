@@ -1,6 +1,6 @@
-import pandas as pd
-import datetime as dt
-import os
+from pandas import DataFrame, read_csv
+from datetime import datetime, timedelta
+from os import listdir, mkdir, path
 import iol
 import logs
 import posiciones as p
@@ -14,12 +14,13 @@ class Portfolio:
     def __str__(self):
         repres = ['--------------- Portfolio ---------------',
                   f'Dinero Disponible: ${self.cash():.2f}', '\nPosiciones:',
-                  ' | '.join([f'{"Accion":^35}', f'{"Valor":^30}', f'{"Rendimiento":^30}', f'{"Tasa Mensualizada":^20}', f'{"Estado":^10}']),
+                  ' | '.join([f'{"Accion":^35}', f'{"Valor":^30}', f'{"Rendimiento":^30}', f'{"Tasa Mensualizada":^20}',
+                              f'{"Estado":^10}']),
                   ' | '.join([f'{"":-<35}', f'{"":->30}', f'{"":->30}', f'{"":->20}', f'{"":->10}'])]
         for pos in self.posiciones():
             col1 = f'{pos.ticker()} ({pos.nombre()})'
             col2 = f'${pos.valor():.2f} ({pos.cantidad():.0f} x ${pos.precio_venta():.2f})'
-            col3 = f'{pos.rendimiento():.2%} en {(pos.fecha_venta()-pos.fecha_compra())/dt.timedelta(days=1):.0f} dias'
+            col3 = f'{pos.rendimiento():.2%} en {(pos.fecha_venta() - pos.fecha_compra()) / timedelta(days=1):.0f} dias'
             # Le sumo 1 a la longitud de la posicion para evitar dividir por cero
             col4 = f'{(1 + pos.rendimiento()) ** (30 / (len(pos) + 1)) - 1:.2%}'
             col5 = f'{pos.estado()}'
@@ -45,7 +46,7 @@ class Portfolio:
         data = [['CASH', '', '', '', '', '', '', self._cash_disp, '', '', '']]
         for posicion in self._posiciones:
             data.append(posicion.registro())
-        return pd.DataFrame(data=data, columns=cols)
+        return DataFrame(data=data, columns=cols)
 
     # Agrega una lista de posiciones a la que ya tiene
     def agregar_pos(self, posiciones):
@@ -103,14 +104,14 @@ class Portfolio:
             self.modif_cash(iol.estado_cuenta(token)[0])
             self.agregar_pos(iol.portfolio(token))
         else:
-            timestamp = dt.datetime.strptime(log_info[log_entry], '%Y-%m-%d %H:%M:%S.%f')
+            timestamp = datetime.strptime(log_info[log_entry], '%Y-%m-%d %H:%M:%S.%f')
             # Traigo las operaciones desde el dia de ese timestamp
             operaciones = iol.operaciones(token, timestamp.date())
             operaciones.reverse()
             # Filtro las transacciones solamente posteriores a la hora del timestamp
             opers = []
             for oper in operaciones:
-                if dt.datetime.strptime(oper['fechaOperada'].split('.')[0], '%Y-%m-%dT%H:%M:%S') > timestamp:
+                if datetime.strptime(oper['fechaOperada'].split('.')[0], '%Y-%m-%dT%H:%M:%S') > timestamp:
                     opers.append(oper)
             # Tengo en opers las operaciones a actualizar verdaderamente. Se actualizan en el portfolio indicado
             for oper in opers:
@@ -119,16 +120,16 @@ class Portfolio:
                                      oper['cantidadOperada'],
                                      guarda_cerradas,
                                      oper['precioOperado'],
-                                     dt.datetime.strptime(oper['fechaOperada'], '%Y-%m-%dT%H:%M:%S'))
+                                     datetime.strptime(oper['fechaOperada'], '%Y-%m-%dT%H:%M:%S'))
                 elif oper['tipo'] == 'Compra':
                     nueva_pos = p.Posicion(oper['simbolo'],
-                                           dt.datetime.strptime(oper['fechaOperada'].split('.')[0],
-                                                                '%Y-%m-%dT%H:%M:%S').date(),
+                                           datetime.strptime(oper['fechaOperada'].split('.')[0],
+                                                             '%Y-%m-%dT%H:%M:%S').date(),
                                            oper['precioOperado'],
                                            oper['cantidadOperada'])
                     self.agregar_pos([nueva_pos])
         self.ordenar()
-        log_info[log_entry] = dt.datetime.strftime(dt.datetime.today(), '%Y-%m-%d %H:%M:%S.%f')
+        log_info[log_entry] = datetime.strftime(datetime.today(), '%Y-%m-%d %H:%M:%S.%f')
         logs.actualizar_log(log_info)
 
     def actualizar_precios(self, cambiar_cash=True):
@@ -142,7 +143,7 @@ class Portfolio:
         for pos in self.posiciones():
             if pos.estado() == 'Abierta':
                 pos.modif_precio(iol.cotizacion(token, pos.ticker()))
-                pos.modif_fecha(dt.datetime.today())
+                pos.modif_fecha(datetime.today())
         self.ordenar()
 
 
@@ -151,21 +152,21 @@ class Portfolio:
 # CORRIDAS DISTINTAS DEL SCRIPT. CON CADA SCRIPT EMPEZARIAMOS SIN INFO, PERO ESTAS FUNCIONES HACEN QUE MANTENGAMOS EL
 # REGISTRO DEL ESTADO DE LOS PORTFOLIOS A TRAVES DEL TIEMPO Y LAS DISTINTAS EJECUCIONES
 # Funcion que levanta de una ubicacion especifica el ultimo portfolio, distingue acciones del cash
-def levantar_portfolio(path):
-    if os.path.exists(path):
+def levantar_portfolio(path_f):
+    if path.exists(path_f):
         # Busco el archivo del ultimo portfolio
-        df = pd.read_csv(path, index_col='#')
+        df = read_csv(path_f, index_col='#')
         # La primera fila siempre será el cash. Se construye el objeto port de la clase Portfolio
         port = Portfolio(df.loc[0]['Valor'])
         # Se elimina del dataframe la fila del cash, quedando netamente las acciones dentro del portfolio
         df = df.drop(0).reset_index(drop=True)
         for fila in df.index:
             port.agregar_pos([p.Posicion(df.loc[fila]['Ticker'],
-                                         dt.datetime.strptime(df.loc[fila]['Fecha Compra'], '%Y-%m-%d').date(),
+                                         datetime.strptime(df.loc[fila]['Fecha Compra'], '%Y-%m-%d').date(),
                                          df.loc[fila]['Precio Compra'],
                                          df.loc[fila]['Cantidad'],
                                          df.loc[fila]['Estado'],
-                                         dt.datetime.strptime(df.loc[fila]['Fecha Venta'], '%Y-%m-%d').date(),
+                                         datetime.strptime(df.loc[fila]['Fecha Venta'], '%Y-%m-%d').date(),
                                          df.loc[fila]['Precio Venta'])])
     else:
         port = Portfolio()
@@ -174,7 +175,7 @@ def levantar_portfolio(path):
 
 # Funcion que registra un portfolio en un archivo de forma que levantándolo con la funcion correspondiente se pueda
 # reconstruir igual que en la ejecucion previa del script
-def bajar_portfolio(port, path):
-    if 'Seguimiento' not in os.listdir('.'):
-        os.mkdir('Seguimiento')
-    port.registro_port().to_csv(path, index=True, index_label='#')
+def bajar_portfolio(port, path_f):
+    if 'Seguimiento' not in listdir('.'):
+        mkdir('Seguimiento')
+    port.registro_port().to_csv(path_f, index=True, index_label='#')

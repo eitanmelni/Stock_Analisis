@@ -1,8 +1,8 @@
-import matplotlib
-import pandas as pd
-import os
-import datetime as dt
+from pandas import DataFrame, read_csv
+from os import listdir, mkdir
+from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
+from matplotlib import interactive
 import acciones as acc
 
 
@@ -12,18 +12,18 @@ def invertir_posicion(lista, indice_1, indice_2):
 
 # Funcion que se encarga de explorar que csv hay, los importa, los grafica y guarda todos los graficos
 def graficos_velas(dias=180, definicion=600):
-    matplotlib.interactive(False)
+    interactive(False)
     # Traigo una lista con los nombres de los archivos csv con la serie historica de las acciones
-    archivos = os.listdir('Stocks Data')
+    archivos = listdir('Stocks Data')
     graficado = []
     print('\nSTATUS GRAFICOS:')
     # EMPIEZA EL LOOP PARA RECORRER CADA UNO Y GRAFICARLO
     for archivo in archivos:
         # Traigo la data de un CSV
-        df = pd.read_csv(f'Stocks Data/{archivo}', index_col='Fecha', parse_dates=True)
+        df = read_csv(f'Stocks Data/{archivo}', index_col='Fecha', parse_dates=True)
         # Corto el dataset en las fechas de interes, cambio los nombres de algunas columnas y agrego una columna
         # con el numero de la fila
-        prices = df.loc[df.index >= dt.datetime.today() - dt.timedelta(days=dias)]
+        prices = df.loc[df.index >= datetime.today() - timedelta(days=dias)]
         prices = prices.rename(columns={'Open': 'open', 'High': 'high', 'Low': 'low', 'Adj Close': 'close'})
         prices['num_fila'] = range(1, len(prices) + 1)
 
@@ -230,7 +230,7 @@ def graficos_velas(dias=180, definicion=600):
         # Esta vez retiro los tick y las etiquetas de valores del eje y, y limito el eje x a los valores que estan
         # presentes
         ax4.set_yticks([])
-        ax4.set_xlim(prices.index[0], prices.index[-1] + dt.timedelta(days=1))
+        ax4.set_xlim(prices.index[0], prices.index[-1] + timedelta(days=1))
 
         # Color de las etiquetas de los ticks del eje x
         for tick in ax4.xaxis.get_major_ticks():
@@ -253,8 +253,8 @@ def graficos_velas(dias=180, definicion=600):
         '''
 
         # GUARDADO DEL GRAFICO EN UNA CARPETA CREADA PARA ESTE FIN
-        if 'Stocks Grafs' not in os.listdir('.'):
-            os.mkdir('Stocks Grafs')
+        if 'Stocks Grafs' not in listdir('.'):
+            mkdir('Stocks Grafs')
         fig.savefig(f'Stocks Grafs/{archivo.split(".")[0]}.jpg', dpi=definicion)
 
         # Updateo al usuario sobre los graficos ya guardados. Lo mismo con la lista que devuelve la funcion
@@ -265,7 +265,7 @@ def graficos_velas(dias=180, definicion=600):
 
 
 def grafico_portfolio(portfolio, archivo, definicion=800):
-    matplotlib.interactive(False)
+    interactive(False)
     colores = ['#3EB352', '#4BBDAD', '#4B77A6', '#5F4BBD', '#A147B3', '#B53E60', '#BF6B4B', '#A8844A', '#BFAF4B',
                '#8AB547']
     valores = [portfolio.cash()]
@@ -285,7 +285,7 @@ def grafico_portfolio(portfolio, archivo, definicion=800):
 
     # Armo un Dataframe temporal para ordenar las acciones como mejor se pueda de forma de no superponer etiquetas
     cols = ['Acc', 'Valor', 'Rend', 'Share']
-    info_graf = pd.DataFrame(data=[etiquetas, valores, rendimientos, porcentajes], index=cols)
+    info_graf = DataFrame(data=[etiquetas, valores, rendimientos, porcentajes], index=cols)
     info_graf = info_graf.transpose().sort_values(by='Share', ignore_index=True)
     info_graf['Bool'] = info_graf['Share'].apply(lambda x: x < 0.05)
 
@@ -331,6 +331,6 @@ def grafico_portfolio(portfolio, archivo, definicion=800):
 
     ax.axis('equal')
 
-    if 'Seguimiento' not in os.listdir('.'):
-        os.mkdir('Seguimiento')
+    if 'Seguimiento' not in listdir('.'):
+        mkdir('Seguimiento')
     fig.savefig(f'Seguimiento/{archivo}.jpg', dpi=definicion)

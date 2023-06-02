@@ -1,10 +1,10 @@
-import datetime as dt
-import pandas as pd
-import json
+from datetime import datetime
+from pandas import DataFrame, DatetimeIndex
+from json import loads
+from os import listdir, mkdir
+import iol
 import funciones as fs
 import acciones as acc
-import iol
-import os
 
 
 def stck_dwnld_iol(stock_list=acc.stocks):
@@ -13,7 +13,7 @@ def stck_dwnld_iol(stock_list=acc.stocks):
     # Defino variables generales para hacer el llamado a la api en todos los casos: fechas y mercado de interés
     mercado = 'bCBA'
     start = '2022-05-18'
-    end = dt.datetime.today().date()
+    end = datetime.today().date()
     # preparo los nombre de las columnas con la información que me interesa conservar
     columns = ['Open', 'High', 'Low', 'Adj Close', 'Volume']
     # preparo listas con las acciones que baje con código exitoso y con código de error
@@ -35,13 +35,13 @@ def stck_dwnld_iol(stock_list=acc.stocks):
         index = []
         data = []
         # En caso que la bajada sea exitosa
-        if historico.status_code in [200, 201] and len(json.loads(historico.text)) > 0:
+        if historico.status_code in [200, 201] and len(loads(historico.text)) > 0:
             # Updateo el status para que el usuario siga el progreso
             print(f'- {stock}: exitosa')
             # Guardo el papel en la lista "existosas"
             exitosas.append(stock)
             # Proceso el json con la serie historica de la accion
-            json_hist = json.loads(historico.text)
+            json_hist = loads(historico.text)
             for i in range(1, len(json_hist) + 1):
                 index.append(json_hist[-i]['fechaHora'].split('T')[0])
                 data.append([json_hist[-i]['apertura'],
@@ -51,7 +51,7 @@ def stck_dwnld_iol(stock_list=acc.stocks):
                              json_hist[-i]['volumenNominal']])
             # Armo el dataframe de la accion siempre con las mismas columnas y con las fechas y data que se obtuvo
             # en la serie
-            df = pd.DataFrame(data, index=pd.DatetimeIndex(index), columns=columns)
+            df = DataFrame(data, index=DatetimeIndex(index), columns=columns)
             # ENRIQUECIMIENTO: Agrego el MACD y RSI. Agrego el max y min local, el max de la serie historica y el
             # tipo de vela
             # Luego guardo los archivos en una nueva carpeta para almacenarlos
@@ -63,8 +63,8 @@ def stck_dwnld_iol(stock_list=acc.stocks):
             # Sumo la info de la accion actual del loop a las listas del resumen
             tickers.append(stock)
             resumen.append(df.iloc[-1])
-            if 'Stocks Data' not in os.listdir('.'):
-                os.mkdir('Stocks Data')
+            if 'Stocks Data' not in listdir('.'):
+                mkdir('Stocks Data')
             df.to_csv(f'Stocks Data\\{acc.tickers[stock]}.csv', index=True, index_label='Fecha')
         # En caso que la bajada devuelva un error, solamente se guarda la accion y el error en la lista "fail_download"
         else:
@@ -72,7 +72,7 @@ def stck_dwnld_iol(stock_list=acc.stocks):
             print(f'- {stock}: fallida')
             fail_download.append([stock, historico.status_code])
     # Creo el dframe de resumen con una linea por accion donde el index es el ticker y la data es la info del ultimo dia
-    resumen_acciones = pd.DataFrame(resumen, index=tickers, columns=columns_resumen)
+    resumen_acciones = DataFrame(resumen, index=tickers, columns=columns_resumen)
     resumen_acciones.to_csv('Resumen_Acciones.csv', index=True, index_label='Accion')
     # Como resultado solo se devuelve las listas con exitos y errores, pero ademas la funcion tiene el trabajo de crear
     # los archivos con las series historicas de las descargas exitosas
@@ -100,8 +100,6 @@ QUIZAS, EN LUGAR DE UN PLAN B, SE PUEDE CONSEGUIR UN SITIO (ALPHA VANTAGE, POR E
 EMPRESAS Y MEDIANTE UN MODELO DE MACHINE LEARNING UBICAR LAS ACCIONES CON MAS PROBABLIDADES DE SUBIR EN LOS PROXIMOS 
 TIEMPOS
 '''
-
-
 
 '''def stck_dwnld_alpha(tickers):
     pass'''

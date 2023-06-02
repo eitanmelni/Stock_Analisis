@@ -1,6 +1,6 @@
 import acciones as acc
 import pandas as pd
-import datetime as dt
+from datetime import timedelta
 
 
 class Posicion:
@@ -96,7 +96,7 @@ class Posicion:
         return self._valor_actual - other.valor()'''
 
     def __len__(self):
-        res = round((self._fecha_v - self._fecha_c) / dt.timedelta(days=1))
+        res = round((self._fecha_v - self._fecha_c) / timedelta(days=1))
         if res > 0:
             return res
         else:
