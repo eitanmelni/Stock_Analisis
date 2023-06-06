@@ -26,6 +26,7 @@ def main():
         port_historico = pf.levantar_portfolio('Seguimiento/ultimo_historico.csv')
     except:
         print('Error al levantar portfolios')
+        logging.error('Error al levantar portfolios')
         sleep(5)
         exit()
 
@@ -36,6 +37,7 @@ def main():
         print('- Tenencias actualizadas')
     except:
         print('Error al actualizar portfolios')
+        logging.error('Error al actualizar portfolios')
         sleep(5)
         exit()
 
@@ -46,6 +48,7 @@ def main():
         print('- Precios actualizados')
     except:
         print('Error al actualizar precios de acciones en portfolios')
+        logging.error('Error al actualizar precios de acciones en portfolios')
         sleep(5)
         exit()
 
@@ -55,6 +58,7 @@ def main():
         pf.bajar_portfolio(port_historico, path_f='Seguimiento/ultimo_historico.csv')
     except:
         print('Error al guardar portfolios')
+        logging.error('Error al guardar portfolios')
         sleep(5)
         exit()
 
@@ -64,6 +68,7 @@ def main():
         print(f'- Tus tenencias actuales fueron graficadas en Seguimiento/Tenencias.jpg')
     except:
         print('Error al graficar portfolio actual')
+        logging.error('Error al graficar portfolio actual')
         sleep(5)
         exit()
 
@@ -76,6 +81,7 @@ def main():
             limpiar_carpeta('Stocks Grafs')
     except:
         print('Error al eliminar info de Stocks')
+        logging.error('Error al eliminar info de Stocks')
         sleep(5)
         exit()
 
@@ -91,6 +97,7 @@ def main():
         fallidas = [elemento[0] for elemento in estado_descarga[1]]
     except:
         print('Error al bajar series historicas de iol')
+        logging.error('Error al bajar series historicas de iol')
         sleep(5)
         exit()
 
@@ -99,6 +106,7 @@ def main():
         gr.graficos_velas(dias=180, definicion=800)
     except:
         print('Error al hacer graficos de velas')
+        logging.error('Error al hacer graficos de velas')
         sleep(5)
         exit()
 
@@ -108,6 +116,7 @@ def main():
             remove('token.txt')
     except:
         print('Error al eliminar token file')
+        logging.error('Error al eliminar token file')
         sleep(5)
         exit()
 
