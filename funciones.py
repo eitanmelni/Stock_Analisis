@@ -1,4 +1,5 @@
 from pandas import DataFrame, Timestamp, read_csv
+import logging
 import acciones as acc
 from datetime import datetime, timedelta
 
@@ -6,6 +7,7 @@ from datetime import datetime, timedelta
 # MACD 12,26,close,9
 # Toma un data frame con la columa del precio al cierre y agrega las 3 columnas del MACD: MACD, Señal e Histograma
 def macd(dataframe, column='Adj Close'):
+    logging.info('Calculo de MACD')
     dataframe['EMA12'] = dataframe[column].ewm(span=12, adjust=False).mean()
     dataframe['EMA26'] = dataframe[column].ewm(span=26, adjust=False).mean()
     dataframe['MACD'] = dataframe['EMA12'] - dataframe['EMA26']
@@ -19,6 +21,7 @@ def macd(dataframe, column='Adj Close'):
 # A partir de un DF con una columna "Prices" devuelve otro DF con los retornos porcentuales diarios y totales desde el
 # principio del DF de origen
 def profits(dataframe, column, start_date, end_date=datetime.today()):
+    logging.info('Calculo de profits')
     subdf = DataFrame(dataframe.loc[start_date:end_date, column].values, columns=['Prices'],
                       index=dataframe.loc[start_date:end_date].index)
     subdf['Daily Return'] = (subdf['Prices'] / subdf['Prices'].shift(1))-1
@@ -29,6 +32,7 @@ def profits(dataframe, column, start_date, end_date=datetime.today()):
 # RSI14
 # A partir de un DF con columna de Precios de Cierre, devuelve el mismo DF con una columa adicional con el RSI
 def rsi(dataframe, column='Adj Close'):
+    logging.info('Calculo de RSI')
     dataframe['Daily Return RSI'] = dataframe[column] - dataframe[column].shift(1)
     dataframe['DRpos'] = dataframe['Daily Return RSI'][dataframe['Daily Return RSI'] > 0]
     dataframe['DRneg'] = - dataframe['Daily Return RSI'][dataframe['Daily Return RSI'] < 0]
@@ -45,6 +49,7 @@ def rsi(dataframe, column='Adj Close'):
 # Esta funcion toma un DF, una columna y asume un paso diario a menos que se indique lo contrario y devuelve el ratio
 # Sharpe
 def asr(dataframe, column, paso='d'):
+    logging.info('Calculo de Sharpe')
     sharpe = None
     if paso == 'd':
         sharpe = (252**0.5) * dataframe[column].mean() / dataframe[column].std()
@@ -60,6 +65,7 @@ def asr(dataframe, column, paso='d'):
 # Funcion que agrega el maximo y el minimo valor de la columna que se le pase de un dataframe para un gap de tiempo en
 # dias especificado
 def extremos_locales(df, column='Adj Close', gap=90):
+    logging.info('Calculo de Extremos Locales')
     # Obtengo un subdataframe con fechas de "gap" dias hacia atras. Será la ventana de los máximos y minimos locales
     subdf = df.loc[df.index >= Timestamp(datetime.today().date() - timedelta(days=gap))]
     # Calculo el maximo y minimo locales y los incorporo al subdataframe
@@ -71,11 +77,13 @@ def extremos_locales(df, column='Adj Close', gap=90):
 
 # Funcion que agrega el máximo y el minimo históricos de la columna que se pase de un dataframe.
 def extremos_hist(df, column='Adj Close'):
+    logging.info('Calculo de Maximo Absoluto')
     return df.assign(AbsMax=df[column].max())
 
 
 # Funcion que clasifica cada dia usando las columnas de apertura, max, min y cierre del dia
 def velas_categ(df, open_price='Open', high='High', low='Low', close='Adj Close'):
+    logging.info('Categorizacion de velas')
     # Calculo la volatilidad como el % que representan la apertura y el cierre respecto de max y min de cada vela
     subdf = DataFrame(abs((df[open_price] - df[close]) / (df[high] - df[low])), columns=['Vela'])
     # Funcion ad-hoc que decide si la volatilidad calculada es alta media o baja
@@ -91,6 +99,7 @@ def velas_categ(df, open_price='Open', high='High', low='Low', close='Adj Close'
 
 # Análisis MACD
 def analisis_macd(stocks):
+    logging.info('Analisis de MACD')
     acciones = []
     data = []
     cols = ['Empresa', 'Precio', 'MACD', 'RSI', 'Estado RSI', 'Performance Last 3d']

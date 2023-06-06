@@ -1,6 +1,7 @@
 from pandas import DataFrame, read_csv
 from datetime import datetime, timedelta
 from os import listdir, mkdir, path
+import logging
 import iol
 import logs
 import posiciones as p
@@ -153,6 +154,7 @@ class Portfolio:
 # REGISTRO DEL ESTADO DE LOS PORTFOLIOS A TRAVES DEL TIEMPO Y LAS DISTINTAS EJECUCIONES
 # Funcion que levanta de una ubicacion especifica el ultimo portfolio, distingue acciones del cash
 def levantar_portfolio(path_f):
+    logging.info(f'Se busca el portfolio {path_f.split("/")[-1].split(".")[0]}')
     if path.exists(path_f):
         # Busco el archivo del ultimo portfolio
         df = read_csv(path_f, index_col='#')
@@ -176,6 +178,7 @@ def levantar_portfolio(path_f):
 # Funcion que registra un portfolio en un archivo de forma que levantándolo con la funcion correspondiente se pueda
 # reconstruir igual que en la ejecucion previa del script
 def bajar_portfolio(port, path_f):
+    logging.info(f'Se guarda el portfolio {path_f.split("/")[-1].split(".")[0]}')
     if 'Seguimiento' not in listdir('.'):
         mkdir('Seguimiento')
     port.registro_port().to_csv(path_f, index=True, index_label='#')

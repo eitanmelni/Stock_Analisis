@@ -7,6 +7,7 @@ from dateutil import tz
 from pwinput import pwinput
 from time import sleep
 from sys import exit
+import logging
 import posiciones as p
 
 
@@ -16,6 +17,7 @@ import posiciones as p
 
 
 def token():
+    logging.info('Se solicita datos al usuario')
     usr = input("Usuario IOL: ").strip()
     psw = pwinput('Contraseña IOL: ', '*').strip()
 
@@ -36,6 +38,7 @@ def token():
 
 # Funcion que pide user y pass y genera un token nuevo y devuelve la respuesta
 def refresh_bearer(refresh_token):
+    logging.info('Se refreshea el token iol')
     url = 'https://api.invertironline.com/token'
     args = {'grant_type': 'refresh_token',
             'refresh_token': refresh_token,
@@ -50,6 +53,7 @@ def refresh_bearer(refresh_token):
 # Funcion que se encarga de convertir la respuesta de la API en un diccionario tipo json e interpretar las partes
 # relevantes y devolverlas
 def process_token_json(respuesta):
+    logging.info('Se procesa la respuesta del token')
     # Se crea un json (diccionario) con la respuesta de la API
     info = loads(respuesta.text)
     # Se procesan las fechas de emision y caducidad de la respuesta. Vienen en GMT, entonces las transformo para que se
@@ -73,6 +77,7 @@ def process_token_json(respuesta):
 
 # Funcion para generar y almacenar la info de un nuevo token
 def registro_token(refresh=False):
+    logging.info('Se registra el token en un txt')
     if refresh:
         with open('token.txt', 'r') as archivo_token:
             # Leer cada línea del archivo y guardarla en una lista
@@ -97,6 +102,7 @@ def gestor_token():
         registro_token(refresh=False)
     # Si existe ya un file, hay que verificar su contenido y las fechas asentadas en el
     else:
+        logging.info('Se lee el archivo token.txt')
         # Abrir el archivo en modo de lectura (que ya existia o fue creado recien)
         with open('token.txt', 'r') as archivo_token:
             # Leer cada línea del archivo y guardarla en una lista
@@ -116,6 +122,7 @@ def gestor_token():
 
 
 def serie_hist(stock, token, start='2022-01-01', end=datetime.today().date(), mercado='bCBA'):
+    logging.info(f'Serie historica de {stock}')
     url = f'https://api.invertironline.com///api/v2/{mercado}/Titulos/{stock}/Cotizacion/seriehistorica/{start}/{end}/ajustada'
     headers = {'Accept': 'application/json',
                'Authorization': f'Bearer {token}'
@@ -125,6 +132,7 @@ def serie_hist(stock, token, start='2022-01-01', end=datetime.today().date(), me
 
 
 def estado_cuenta(token):
+    logging.info('Se busca el estado de cuenta')
     url = 'https://api.invertironline.com//api/v2/estadocuenta'
     headers = {'Accept': 'application/json',
                'Authorization': f'Bearer {token}'
@@ -140,6 +148,7 @@ def estado_cuenta(token):
 
 
 def operaciones(token, desde=None, hasta=datetime.today()):
+    logging.info('Se buscan las operaciones nuevas')
     # Seteo de la consulta a la API
     url = 'https://api.invertironline.com//api/v2/operaciones'
     headers = {'Accept': 'application/json',
@@ -165,6 +174,7 @@ def operaciones(token, desde=None, hasta=datetime.today()):
 
 
 def cotizacion(token, simbolo, mercado='bCBA', plazo='t2'):
+    logging.info(f'Se actualiza el precio de {simbolo}')
     url = f'https://api.invertironline.com//api/v2/{mercado}/Titulos/{simbolo}/Cotizacion'
     headers = {'Accept': 'application/json',
                'Authorization': f'Bearer {token}'
@@ -184,6 +194,7 @@ def cotizacion(token, simbolo, mercado='bCBA', plazo='t2'):
 
 
 def portfolio(token):
+    logging.info('Se busca el portfolio actual')
     url = 'https://api.invertironline.com//api/v2/portafolio/argentina'
     args = {'api_key': token}
     headers = {'Accept': 'application/json',

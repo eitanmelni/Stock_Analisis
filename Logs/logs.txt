@@ -1,1 +1,1 @@
-{'ultima_actu_portfolio': '2023-06-02 13:24:11.052714', 'ultima_actu_historico': '2023-06-02 13:24:11.765008'}
+{'ultima_actu_portfolio': '2023-06-05 23:37:07.271003', 'ultima_actu_historico': '2023-06-05 23:37:08.681978'}

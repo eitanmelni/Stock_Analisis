@@ -3,6 +3,7 @@ from os import listdir, mkdir
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 from matplotlib import interactive
+import logging
 import acciones as acc
 
 
@@ -12,6 +13,7 @@ def invertir_posicion(lista, indice_1, indice_2):
 
 # Funcion que se encarga de explorar que csv hay, los importa, los grafica y guarda todos los graficos
 def graficos_velas(dias=180, definicion=600):
+    logging.info('Comienza la creación de gráficos de velas')
     interactive(False)
     # Traigo una lista con los nombres de los archivos csv con la serie historica de las acciones
     archivos = listdir('Stocks Data')
@@ -19,6 +21,7 @@ def graficos_velas(dias=180, definicion=600):
     print('\nSTATUS GRAFICOS:')
     # EMPIEZA EL LOOP PARA RECORRER CADA UNO Y GRAFICARLO
     for archivo in archivos:
+        logging.info(f'Se grafica {archivo.split(".")[0]}')
         # Traigo la data de un CSV
         df = read_csv(f'Stocks Data/{archivo}', index_col='Fecha', parse_dates=True)
         # Corto el dataset en las fechas de interes, cambio los nombres de algunas columnas y agrego una columna
@@ -265,6 +268,7 @@ def graficos_velas(dias=180, definicion=600):
 
 
 def grafico_portfolio(portfolio, archivo, definicion=800):
+    logging.info(f'Se grafica el portfolio de {archivo}')
     interactive(False)
     colores = ['#3EB352', '#4BBDAD', '#4B77A6', '#5F4BBD', '#A147B3', '#B53E60', '#BF6B4B', '#A8844A', '#BFAF4B',
                '#8AB547']

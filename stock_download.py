@@ -2,12 +2,14 @@ from datetime import datetime
 from pandas import DataFrame, DatetimeIndex
 from json import loads
 from os import listdir, mkdir
+import logging
 import iol
 import funciones as fs
 import acciones as acc
 
 
 def stck_dwnld_iol(stock_list=acc.stocks):
+    logging.info('Se comienza a descargar las series historicas')
     # Gestiono el token
     iol.gestor_token()
     # Defino variables generales para hacer el llamado a la api en todos los casos: fechas y mercado de interés

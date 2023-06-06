@@ -4,6 +4,7 @@ __author__ = 'Eitan Melnitzky'
 from os import listdir, path, remove
 from time import sleep
 from sys import exit
+import logging
 import stock_download as sd
 import acciones as acc
 import graficos as gr
@@ -115,4 +116,13 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(filename='Logs/events.log', filemode='w', encoding='utf-8',
+                        level=logging.INFO,
+                        format='%(levelname)s - %(asctime)s - %(filename)s, %(funcName)s, line%(lineno)d: %(message)s',
+                        datefmt='%H:%M:%S'
+                        )
+
+    logging.info('Empieza ejecución general')
     main()
+    logging.info('Finaliza ejecución general')
+
