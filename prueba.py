@@ -11,10 +11,10 @@ import json
 import graficos as gr
 import token_staging as ts
 
-
+'''
 # Generamos token para espacio de pruebas
 print(ts.token_staging())
-
+'''
 
 '''token = iol.gestor_token()
 print(token)
@@ -51,24 +51,28 @@ while i in range(n) and rem[1] > 0:
 print(acc)'''
 
 
-
-'''pos1 = p.Posicion('ALUA', dt.datetime(2023, 1, 1), 100, 3, 'Cerrada', dt.datetime(2023, 1, 4), 117)
-pos3 = p.Posicion('MELI', dt.datetime(2023, 1, 1), 130, 4)
-pos2 = p.Posicion('BABA', dt.datetime(2023, 1, 1), 1000, 30, 'Abierta', dt.datetime(2023, 2, 4), 1231.7)
+'''
+pos1 = p.Posicion('ALUA', dt.datetime(2023, 1, 1).date(), 350, 1)
+pos2 = p.Posicion('BABA', dt.datetime(2023, 1, 2).date(), 1000, 30)
+pos3 = p.Posicion('ALUA', dt.datetime(2023, 1, 5).date(), 360, 40)
 pos4 = p.Posicion('GGAL', dt.datetime(2023, 1, 1), 3000, 13)
 pos5 = p.Posicion('YPFD', dt.datetime(2023, 1, 1), 2340, 5)
 pos6 = p.Posicion('C', dt.datetime(2023, 1, 1), 2340, 5)
 pos7 = p.Posicion('BMA', dt.datetime(2023, 1, 1), 2340, 5)
 pos8 = p.Posicion('COME', dt.datetime(2023, 1, 1), 2340, 5)
 
-pos = [pos1, pos2, pos3, pos4, pos5, pos6, pos7, pos8]
+pos = [pos1, pos2, pos3]
 
 port1 = pf.Portfolio(600)
 
 port1.agregar_pos(pos)
 
-print(port1)'''
+print(port1)
 
+port1.remover_pos('ALUA', 41, True, 370, dt.datetime(2023, 1, 10, 10, 34))
+
+print(port1)
+'''
 
 '''log_info = dict()
 log_info['ultima_actu_portfolio'] = '2023-04-15 18:03:45'

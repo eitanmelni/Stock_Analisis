@@ -120,7 +120,7 @@ class Posicion:
         self.__recalcular()
 
     def modif_fecha(self, nueva_fecha):
-        self._fecha_v = nueva_fecha.date()
+        self._fecha_v = nueva_fecha
 
     def registro(self):
         return [self.ticker(),
@@ -141,7 +141,7 @@ class Posicion:
         self._precio_v = df['Adj Close'][-1]
         self.__recalcular()
 
-    def toma_ganancia(self, cant, fecha, precio):
+    def toma_ganancia(self, cant, fecha, precio, accion_cerrada):
         if cant >= self._cantidad_titulos:
             pass
         else:
@@ -149,16 +149,17 @@ class Posicion:
             self._fecha_v = fecha
             self._precio_v = precio
             self.__recalcular()
-            print(self)
-            pos_cerr = Posicion(ticker=self._ticker,
-                                fecha_c=self._fecha_c,
-                                precio_c=self._precio_c,
-                                cantidad_titulos=cant,
-                                estado='Cerrada',
-                                fecha_v=fecha,
-                                precio_v=precio)
-            print(pos_cerr)
-            return pos_cerr
+            if accion_cerrada:
+                pos_cerr = Posicion(ticker=self._ticker,
+                                    fecha_c=self._fecha_c,
+                                    precio_c=self._precio_c,
+                                    cantidad_titulos=cant,
+                                    estado='Cerrada',
+                                    fecha_v=fecha,
+                                    precio_v=precio)
+                return pos_cerr
+            else:
+                return None
 
     def recalcular(self):
         self.__recalcular()

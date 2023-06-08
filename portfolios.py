@@ -54,14 +54,15 @@ class Portfolio:
         self._posiciones += posiciones
 
     # Remueve una lista de posiciones a la que ya tiene
-    def remover_pos(self, tickr, cant, guarda_cerradas=False, precio=None, fecha=None):
+    def remover_pos(self, tickr, cantidad, guarda_cerradas=False, precio=None, fecha=None):
         # Inicializo el tamaño de la lista de posiciones y el contador i
         n = len(self._posiciones)
         i = 0
+        cant = cantidad
         # El loop sigue siempre y cuando no se haya recorrido toda la lista o que la cantidad de acciones para descontar
         # sea cero
         while i in range(n) and cant > 0:
-            if self._posiciones[i].ticker() == tickr:
+            if self._posiciones[i].ticker() == tickr and self._posiciones[i].estado() == 'Abierta':
                 # Para el ticker correcto se descuenta la cantidad de acciones que se puede de las posiciones y se
                 # descuenta el mismo numero del parametro cant de la funcion, es decir que esas son las acciones que
                 # aun falta descontar del portfolio
@@ -75,9 +76,11 @@ class Portfolio:
                         self._posiciones[i].modif_estado('Cerrada')
                         self._posiciones[i].modif_fecha(fecha)
                         self._posiciones[i].recalcular()
-                        i += i
+                        i += 1
                 else:
-                    self._posiciones.append(self._posiciones[i].toma_ganancia(cant, fecha, precio))
+                    posicion_cerrada = self._posiciones[i].toma_ganancia(cant, fecha, precio, guarda_cerradas)
+                    if posicion_cerrada is not None:
+                        self._posiciones.append(posicion_cerrada)
                     cant = 0
             else:
                 i += 1
@@ -121,7 +124,7 @@ class Portfolio:
                                      oper['cantidadOperada'],
                                      guarda_cerradas,
                                      oper['precioOperado'],
-                                     datetime.strptime(oper['fechaOperada'], '%Y-%m-%dT%H:%M:%S'))
+                                     datetime.strptime(oper['fechaOperada'], '%Y-%m-%dT%H:%M:%S').date())
                 elif oper['tipo'] == 'Compra':
                     nueva_pos = p.Posicion(oper['simbolo'],
                                            datetime.strptime(oper['fechaOperada'].split('.')[0],
@@ -144,7 +147,7 @@ class Portfolio:
         for pos in self.posiciones():
             if pos.estado() == 'Abierta':
                 pos.modif_precio(iol.cotizacion(token, pos.ticker()))
-                pos.modif_fecha(datetime.today())
+                pos.modif_fecha(datetime.today().date())
         self.ordenar()
 
 
