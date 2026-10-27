@@ -1,15 +1,19 @@
-from pandas import DataFrame, Series, Timestamp, Timedelta
+from pandas import DataFrame, Series, Timestamp, Timedelta, read_csv
 from pandas.tseries.offsets import MonthEnd
 from datetime import datetime
 from json import loads
-from os import listdir, mkdir
+from os import listdir, mkdir, path
+from unicodedata import normalize
 import logging
 import iol
 
-# Este modulo reconstruye hacia atras la evolucion de la cartera de titulos, con un punto por mes, desde el ultimo momento
-# en que no se tenia ninguna accion. Se usan solo los titulos: cada compra es plata que entra a la cartera y cada venta es
-# plata que sale, asi que no hace falta conocer depositos ni retiros de la cuenta.
+# Este modulo reconstruye hacia atras la evolucion de la cartera, con un punto por mes, desde el ultimo momento en que no
+# se tenia ninguna accion. El valor de la cartera es titulos + cash. El cash se arma con las compras y ventas (que vienen
+# de IOL) y con los movimientos de plata que no son operaciones (depositos, retiros, dividendos, comisiones...), que se
+# cargan a mano en un csv porque no encontre forma de obtenerlos por API. Solo los depositos y retiros se consideran
+# aportes externos para la TIR: los dividendos, rentas, intereses y comisiones son resultado de la cartera.
 ARCHIVO_HISTORIA = 'Seguimiento/historia_cartera.csv'
+ARCHIVO_MOVIMIENTOS = 'Seguimiento/movimientos_cash.csv'
 DESDE_OPERACIONES = '2015-01-01'
 
 
@@ -94,30 +98,76 @@ def precio_a_fecha(ticker, fecha, precios, ops):
     return float(previas['Precio'].iloc[-1])
 
 
-# Arma la historia de la cartera: un renglon por punto con el valor total, lo aportado neto, el resultado, la TIR y el
-# valor de cada papel. precios es un diccionario {ticker: Series de cierres indexada por fecha}
-def construir_historia(ops, precios, hoy):
+def _sin_tildes(texto):
+    return normalize('NFKD', str(texto)).encode('ascii', 'ignore').decode().strip().lower()
+
+
+# Lee el csv de movimientos de cash que no son operaciones. Columnas: Fecha (AAAA-MM-DD), Tipo y Monto. Los tipos
+# 'Deposito' y 'Retiro' son aportes externos (el signo del monto se corrige solo: deposito suma y retiro resta). Un tipo
+# 'Saldo Inicial' es el cash que ya habia el dia que empieza la tenencia continua (cuenta como un deposito ese dia).
+# Cualquier otro tipo (Dividendo, Renta, Comision, Impuesto, Interes...) se toma con el signo del monto y es resultado
+def leer_movimientos(path_f=ARCHIVO_MOVIMIENTOS):
+    cols = ['Fecha', 'Tipo', 'Monto']
+    if not path.exists(path_f):
+        return DataFrame(columns=cols)
+    df = read_csv(path_f, parse_dates=['Fecha'])[cols]
+    df['Fecha'] = df['Fecha'].dt.normalize()
+    return df.sort_values('Fecha', kind='stable').reset_index(drop=True)
+
+
+# Devuelve para un movimiento (Tipo, Monto) si es un aporte externo y su monto con el signo correcto
+def clasificar_movimiento(tipo, monto):
+    t = _sin_tildes(tipo)
+    if t.startswith('deposito') or t == 'saldo inicial':
+        return True, abs(monto)
+    if t.startswith('retiro'):
+        return True, -abs(monto)
+    return False, monto
+
+
+# Arma la historia de la cartera: un renglon por punto con el valor total (titulos + cash), lo aportado neto por depositos
+# y retiros, el resultado, la TIR y el valor de cada papel. precios es un diccionario {ticker: Series de cierres indexada
+# por fecha} y movs es el dataframe que devuelve leer_movimientos. Los movimientos anteriores al inicio se ignoran: lo que
+# haya de cash a esa fecha debe estar en un movimiento 'Saldo Inicial'
+def construir_historia(ops, precios, movs, hoy):
     inicio = inicio_tenencia_continua(ops)
     ops = ops[ops['Fecha'] >= inicio].copy()
     ops['Flujo'] = ops.apply(lambda f: -f.Cantidad * f.Precio if f.Tipo == 'Compra' else f.Cantidad * f.Precio, axis=1)
     ops['CantFirmada'] = ops.apply(lambda f: f.Cantidad if f.Tipo == 'Compra' else -f.Cantidad, axis=1)
     tickers = sorted(ops['Ticker'].unique())
 
+    # Movimientos de cash desde el inicio, con su clasificacion. El saldo inicial se ubica en la fecha de inicio
+    filas_mov = []
+    for m in movs.itertuples():
+        es_saldo_inicial = _sin_tildes(m.Tipo) == 'saldo inicial'
+        if m.Fecha >= inicio or es_saldo_inicial:
+            externo, monto = clasificar_movimiento(m.Tipo, m.Monto)
+            filas_mov.append([inicio if es_saldo_inicial else m.Fecha, externo, monto])
+    mov = DataFrame(filas_mov, columns=['Fecha', 'Externo', 'Monto']).astype({'Externo': bool, 'Monto': float})
+
     filas = []
     for fecha in puntos_mensuales(inicio, Timestamp(hoy).normalize()):
-        # Todo lo operado hasta el final de ese dia
+        # Todo lo operado y movido hasta el final de ese dia
         hasta = ops[ops['Fecha'] < fecha + Timedelta(days=1)]
+        mov_hasta = mov[mov['Fecha'] < fecha + Timedelta(days=1)]
         cantidades = hasta.groupby('Ticker')['CantFirmada'].sum()
         valores = {}
         for tk in tickers:
             cant = cantidades.get(tk, 0)
             valores[tk] = round(cant * precio_a_fecha(tk, fecha, precios, ops), 2) if round(cant, 6) != 0 else 0.0
-        total = sum(valores.values())
-        flujos = [(f.Fecha.normalize(), f.Flujo) for f in hasta.itertuples()] + [(fecha, total)]
-        aportes = -hasta['Flujo'].sum()
+        titulos = sum(valores.values())
+        cash = hasta['Flujo'].sum() + mov_hasta['Monto'].sum()
+        if cash < -0.01:
+            logging.warning(f'Cash negativo al {fecha.date()}: {cash:.2f}. Faltan depositos o saldo inicial en movimientos')
+        total = titulos + cash
+
+        # Para la TIR solo cuentan como flujos los aportes externos. Un deposito es plata que el inversor pone (negativo)
+        externos = mov_hasta[mov_hasta['Externo']]
+        flujos = [(f.Fecha, -f.Monto) for f in externos.itertuples()] + [(fecha, total)]
+        aportes = externos['Monto'].sum()
         tir = xirr(flujos)
-        filas.append({'Fecha': fecha.date(), 'Valor Total': round(total, 2),
-                      'Aportes Netos Acumulados': round(aportes, 2),
+        filas.append({'Fecha': fecha.date(), 'Valor Total': round(total, 2), 'Valor Titulos': round(titulos, 2),
+                      'Cash': round(cash, 2), 'Aportes Netos Acumulados': round(aportes, 2),
                       'Resultado Nominal': round(total - aportes, 2),
                       'TIR Anualizada': None if tir is None else round(tir, 6),
                       **valores})
@@ -145,7 +195,11 @@ def serie_cierres(ticker, token, desde, hasta):
 def reconstruir_historia(path_f=ARCHIVO_HISTORIA):
     logging.info('Comienza la reconstruccion de la historia de la cartera')
     token = iol.gestor_token()
-    ops = normalizar_operaciones(iol.operaciones(token, DESDE_OPERACIONES))
+    crudas = iol.operaciones(token, DESDE_OPERACIONES)
+    ignoradas = sorted({o['tipo'] for o in crudas if o['tipo'] not in ['Compra', 'Venta']})
+    if ignoradas:
+        print(f'- Tipos de operacion ignorados (no son compra ni venta): {ignoradas}')
+    ops = normalizar_operaciones(crudas)
     if len(ops) == 0:
         raise ValueError('IOL no devolvio operaciones de compra o venta')
     inicio = inicio_tenencia_continua(ops)
@@ -159,11 +213,23 @@ def reconstruir_historia(path_f=ARCHIVO_HISTORIA):
         precios[tk] = serie_cierres(tk, token, desde, hoy)
         print(f'- {tk}: {"ok" if precios[tk] is not None else "sin serie historica (se usara el precio de tus operaciones)"}')
 
-    df = construir_historia(ops, precios, hoy)
+    movs = leer_movimientos()
+    if len(movs) == 0:
+        print(f'- ATENCION: no hay movimientos de cash en {ARCHIVO_MOVIMIENTOS}. Sin depositos el cash y la TIR no son confiables')
+    df = construir_historia(ops, precios, movs, hoy)
     if 'Seguimiento' not in listdir('.'):
         mkdir('Seguimiento')
     df.to_csv(path_f, index=False)
     print(f'- Historia guardada en {path_f} ({len(df)} puntos)')
+
+    # Contraste con el estado de cuenta real de hoy. Si no coincide, faltan movimientos o hay un problema de precios
+    try:
+        disponible, invertido, _, _ = iol.estado_cuenta(iol.gestor_token())
+        print(f'- Control contra IOL hoy: titulos reconstruidos {df["Valor Titulos"].iloc[-1]:,.2f} vs {invertido:,.2f} '
+              f'| cash reconstruido {df["Cash"].iloc[-1]:,.2f} vs {disponible:,.2f}')
+    except Exception:
+        logging.error('No se pudo contrastar contra el estado de cuenta de IOL')
+        print('- No se pudo contrastar contra el estado de cuenta de IOL')
     return df
 
 
