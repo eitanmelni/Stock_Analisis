@@ -9,6 +9,7 @@ import stock_download as sd
 import acciones as acc
 import graficos as gr
 import portfolios as pf
+import evolucion as ev
 
 
 def limpiar_carpeta(path_f):
@@ -69,6 +70,17 @@ def main():
     except:
         print('Error al graficar portfolio actual')
         logging.error('Error al graficar portfolio actual')
+        sleep(5)
+        exit()
+
+    try:
+        # Registro la foto de hoy del estado de cuenta (cash + titulos) y grafico la evolucion de la cartera completa
+        evolucion = ev.registrar_evolucion()
+        ev.grafico_evolucion(evolucion, archivo='Evolucion', definicion=300)
+        print(f'- Evolución de la cartera registrada y graficada en Seguimiento/Evolucion.jpg')
+    except:
+        print('Error al registrar o graficar la evolución de la cartera')
+        logging.error('Error al registrar o graficar la evolución de la cartera')
         sleep(5)
         exit()
 
